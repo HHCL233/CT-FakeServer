@@ -21,11 +21,11 @@
 0. Clone该项目；
 1. `uv sync`；
 2. 使用`fastapi dev --host 0.0.0.0`启动服务端；
-3. 将游戏访问服务器 （https://ar.codemao.cn） 改为 `IP:8000`；
+3. 将游戏访问服务器 （ https://ar.codemao.cn ） 改为 `IP:8000`；
 4. Enjoy。
 
 ## 注意事项
 
 - 请使用你的编程猫账户进行登录（我们不会盗取你的编程猫账户）。
-- 本项目仅模拟 https://ar.codemao.cn，不模拟其他服务。
+- 本项目仅模拟 https://ar.codemao.cn ，不模拟其他服务。
 - 该项目目前处于不可用状态。
