@@ -110,7 +110,36 @@ async def ar_store():
         "code": "200",
         "message": "success",
         "data": {
-            "sprite": [],
+            "sprite": [
+                {
+                    # 英文简介(type == 0)
+                    "en_description": "ltc!",
+                    # 简介(type == 0)
+                    "description": "占位符!",
+                    # 星数(type == 0)
+                    "star": 1,
+                    # 预览图片(type == 0)
+                    "preview": "https://edgeoneimg.cdn1.vip/i/6a4b679c1a293_1783326620.jpeg",
+                    # 显示图片(type == 2)
+                    "box_image_url": "https://edgeoneimg.cdn1.vip/i/6a4b679c1a293_1783326620.jpeg",
+                    # id(1-3)
+                    "id": 3,
+                    # 类型(type = 1时使用)
+                    "type": 1,
+                    # 名称
+                    "name": "占位符",
+                    # 英文名称
+                    "en_name": "ltc",
+                    # 需要金币(type == 0)
+                    "need_gold": 2015,
+                    # 需要金币(type == 1)
+                    "gold": 12,
+                    # 数量(type == 1)
+                    "num": 2,
+                    # 需要红宝石(type == 2)
+                    "need_masonry": 8,
+                }
+            ],
             "spriteBall": [],
             "treasureBox": [],
         },
@@ -195,7 +224,7 @@ async def get_sprite():
                     # 英文名
                     "en_name": "ltc",
                     # 中文名
-                    "name": "李天驰",
+                    "name": "占位符",
                     # 英文简介
                     "en_description": "Dog",
                     # 中文简介
@@ -255,7 +284,7 @@ async def get_sprite():
                     # 英文名
                     "en_name": "ltc",
                     # 中文名
-                    "name": "李天驰1",
+                    "name": "占位符1",
                     # 英文简介
                     "en_description": "Dog",
                     # 中文简介
@@ -315,7 +344,7 @@ async def get_sprite():
                     # 英文名
                     "en_name": "ltc",
                     # 中文名
-                    "name": "李天驰2",
+                    "name": "占位符2",
                     # 英文简介
                     "en_description": "Dog",
                     # 中文简介
@@ -440,7 +469,7 @@ async def get_showsprite(authorization: Annotated[str, Cookie()]):
             "isCatch": 1,
             "treasure_num": users_data[authorization]["sprite_ball_count"],
             "spriteUrl": "https://edgeoneimg.cdn1.vip/i/6a4b679c1a293_1783326620.jpeg",
-            "name": "李天驰",
+            "name": "占位符",
         },
     }
 
@@ -452,7 +481,7 @@ async def give_catchsprite(authorization: Annotated[str, Cookie()]):
     users_data[authorization]["sprite_ball_count"] -= 1
     new_treasure(
         1,
-        "李天驰",
+        "占位符",
         "ltc",
         "https://edgeoneimg.cdn1.vip/i/6a4b679c1a293_1783326620.jpeg",
         3,
@@ -479,7 +508,7 @@ async def get_rank_enemy_info(authorization: Annotated[str, Cookie()], id: int =
             "enemy_sprites": [
                 {
                     "level": 1,
-                    "sprite_id": "64",
+                    "sprite_id": 64,
                     "fight": 67,
                     "hp": 999,
                     "atk": 183,
@@ -487,7 +516,7 @@ async def get_rank_enemy_info(authorization: Annotated[str, Cookie()], id: int =
                     "faction_name": "地",
                     "user_id": id,
                     "en_name": "ltc",
-                    "name": "李天驰",
+                    "name": "占位符",
                 },
                 {
                     "level": 1,
@@ -499,7 +528,7 @@ async def get_rank_enemy_info(authorization: Annotated[str, Cookie()], id: int =
                     "faction_name": "地",
                     "user_id": id,
                     "en_name": "ltc",
-                    "name": "李天驰",
+                    "name": "占位符",
                 },
                 {
                     "level": 1,
@@ -511,7 +540,7 @@ async def get_rank_enemy_info(authorization: Annotated[str, Cookie()], id: int =
                     "faction_name": "地",
                     "user_id": id,
                     "en_name": "ltc",
-                    "name": "李天驰",
+                    "name": "占位符",
                 },
             ],
         },
