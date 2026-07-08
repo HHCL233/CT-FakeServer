@@ -1,6 +1,9 @@
 from fastapi import FastAPI, Request, Cookie
-from typing import TypedDict, Annotated
+from typing import TypedDict, Annotated, cast
+from pydantic import BaseModel, Field
 import random
+from contextlib import asynccontextmanager
+import json
 
 
 class UserInfo(TypedDict):
@@ -37,9 +40,91 @@ class UserData(TypedDict):
     sprite_ball_count: int
 
 
-users_data: dict[str, UserData] = {}
+# 宝箱对象的类型
+class ConfigTreasureBox(TypedDict):
+    id: int
+    treasureBoxId: int
+    boxImageUrl: str
+    enName: str
+    boxName: str
+    videoType: int
+    unlockNeedTime: int
+    status: int
+    remainingTime: int
+    addMoney: list[int]
+    addBall: list[int]
+    spriteIcon: str
+    spriteName: str
 
-app = FastAPI()
+
+# 新用户对象的类型
+class NewUser(TypedDict):
+    printUserCookie: bool
+    gold: int
+    masonry: int
+    spriteBallCount: int
+    treasurebox: list[ConfigTreasureBox]
+
+
+# 精灵展示对象的类型
+class ShowSprite(TypedDict):
+    spriteUrl: str
+    name: str
+
+
+# 商店商品对象的类型
+class ArStoreItem(TypedDict):
+    enDescription: str
+    description: str
+    star: int
+    preview: str
+    boxImageUrl: str
+    id: int
+    type: int
+    name: str
+    enName: str
+    needGold: int
+    gold: int
+    num: int
+    needMasonry: int
+
+
+# 最外层数据类型
+class RootData(TypedDict):
+    treasureBoxs: list[ConfigTreasureBox]
+    newUser: NewUser
+    showSprite: ShowSprite
+    arStore: list[ArStoreItem]
+
+
+users_data: dict[str, UserData] = {}
+config_data: RootData = cast(RootData, {})
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global config_data
+    # 初始化
+    print("[日志] 开始加载config")
+
+    with open("config.json", "r", encoding="utf-8") as f:
+        config_data = json.load(f)
+
+    print("[日志] 加载完成")
+
+    yield
+    # 关闭程序
+
+    print("[日志] 正在保存数据")
+    with open("config.json", "w", encoding="utf-8") as f:
+        json.dump(config_data, f, indent=4, ensure_ascii=False)
+
+    del config_data
+
+    print("[日志] 保存完成")
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 def new_treasure(
@@ -50,25 +135,31 @@ def new_treasure(
     treasure_box_id: int,
     unlock_need_time: int,
     authorization: str,
-    video_type: int = 1,
+    id: int = 64,
+    video_type: int = 4,
+    remainingTime: int = -1,
+    status: int = 1,
 ):
-    treasurebox: list[TreasureBox] = []
+    # 添加源码蛋
+    temp_treasurebox: list[TreasureBox] = []
     for _index in range(length):
-        treasurebox.append(
+        temp_treasurebox.append(
             {
-                "id": 0,
+                "id": id,
                 "treasure_box_id": treasure_box_id,
                 "box_image_url": image_url,
                 "en_name": en_name,
                 "box_name": name,
                 "video_type": video_type,
                 "unlock_need_time": unlock_need_time,
-                "status": 0,
-                "remainingTime": unlock_need_time,
+                "status": status,
+                "remainingTime": unlock_need_time
+                if remainingTime == -1
+                else remainingTime,
             }
         )
-    users_data[authorization]["treasurebox"] += treasurebox
-    return treasurebox
+    users_data[authorization]["treasurebox"] += temp_treasurebox
+    return temp_treasurebox
 
 
 @app.get("/")
@@ -77,20 +168,36 @@ async def root():
 
 
 @app.post("/user/get_gold_and_ballCount")
-async def get_gold_and_ballCount(authorization: Annotated[str, Cookie()]):
+async def get_gold_and_ballCount(
+    request: Request, authorization: Annotated[str, Cookie()]
+):
     # 获取用户基础信息
 
     if authorization not in users_data.keys():
-        print("[日志] 新用户注册")
+        print(
+            f"[日志] 新用户注册 {authorization if config_data['newUser']['printUserCookie'] else ''}"
+        )
         users_data[authorization] = {
-            "gold": 0,
-            "masonry": 0,
+            "gold": config_data["newUser"]["gold"],
+            "masonry": config_data["newUser"]["masonry"],
             "my_sprite": None,
-            "treasurebox": [],
-            "sprite_ball_count": 999,
+            "treasurebox": [
+                {
+                    "id": item["id"],
+                    "treasure_box_id": item["treasureBoxId"],
+                    "box_image_url": item["boxImageUrl"],
+                    "en_name": item["enName"],
+                    "box_name": item["boxName"],
+                    "video_type": item["videoType"],
+                    "unlock_need_time": item["unlockNeedTime"],
+                    "status": item["status"],
+                    "remainingTime": item["remainingTime"],
+                }
+                for item in config_data["newUser"].get("treasurebox", [])
+            ],
+            "sprite_ball_count": config_data["newUser"]["spriteBallCount"],
         }
 
-    # 未实现
     return {
         "code": "200",
         "data": {
@@ -102,10 +209,9 @@ async def get_gold_and_ballCount(authorization: Annotated[str, Cookie()]):
 
 
 @app.post("/store/ar_store")
-async def ar_store():
+async def ar_store(request: Request):
     # 获取商店所有内容信息
 
-    # 未实现
     return {
         "code": "200",
         "message": "success",
@@ -113,32 +219,33 @@ async def ar_store():
             "sprite": [
                 {
                     # 英文简介(type == 0)
-                    "en_description": "ltc!",
+                    "en_description": item["enDescription"],
                     # 简介(type == 0)
-                    "description": "占位符!",
+                    "description": item["description"],
                     # 星数(type == 0)
-                    "star": 1,
+                    "star": item["star"],
                     # 预览图片(type == 0)
-                    "preview": "https://edgeoneimg.cdn1.vip/i/6a4b679c1a293_1783326620.jpeg",
+                    "preview": item["preview"],
                     # 显示图片(type == 2)
-                    "box_image_url": "https://edgeoneimg.cdn1.vip/i/6a4b679c1a293_1783326620.jpeg",
-                    # id(1-3)
-                    "id": 3,
-                    # 类型(type = 1时使用)
-                    "type": 1,
+                    "box_image_url": item["boxImageUrl"],
+                    # id(1-3)(type == 2时使用)
+                    "id": item["id"],
+                    # 类型
+                    "type": item["type"],
                     # 名称
-                    "name": "占位符",
+                    "name": item["name"],
                     # 英文名称
-                    "en_name": "ltc",
+                    "en_name": item["enName"],
                     # 需要金币(type == 0)
-                    "need_gold": 2015,
+                    "need_gold": item["needGold"],
                     # 需要金币(type == 1)
-                    "gold": 12,
+                    "gold": item["gold"],
                     # 数量(type == 1)
-                    "num": 2,
+                    "num": item["num"],
                     # 需要红宝石(type == 2)
-                    "need_masonry": 8,
+                    "need_masonry": item["needMasonry"],
                 }
+                for item in config_data["arStore"]
             ],
             "spriteBall": [],
             "treasureBox": [],
@@ -242,7 +349,7 @@ async def get_sprite():
                     # 卡片预览图片(在id对应图片时使用本体内图片,否则使用preview)
                     "preview": "https://edgeoneimg.cdn1.vip/i/6a4b679c1a293_1783326620.jpeg",
                     # id(在id对应图片时使用本体内图片,否则使用preview)
-                    "id": 1,
+                    "id": 64,
                     # 当前升级素材数量
                     "num": 0,
                     # 升级等级所需升级素材数量
@@ -302,7 +409,7 @@ async def get_sprite():
                     # 卡片预览图片(在id对应图片时使用本体内图片,否则使用preview)
                     "preview": "https://edgeoneimg.cdn1.vip/i/6a4b679c1a293_1783326620.jpeg",
                     # id(在id对应图片时使用本体内图片,否则使用preview)
-                    "id": 3,
+                    "id": 64,
                     # 当前升级素材数量
                     "num": 0,
                     # 升级等级所需升级素材数量
@@ -362,7 +469,7 @@ async def get_sprite():
                     # 卡片预览图片(在id对应图片时使用本体内图片,否则使用preview)
                     "preview": "https://edgeoneimg.cdn1.vip/i/6a4b679c1a293_1783326620.jpeg",
                     # id(在id对应图片时使用本体内图片,否则使用preview)
-                    "id": 2,
+                    "id": 64,
                     # 当前升级素材数量
                     "num": 0,
                     # 升级等级所需升级素材数量
@@ -395,7 +502,6 @@ async def get_sprite():
 async def get_treasurebox(authorization: Annotated[str, Cookie()]):
     # 获取所有源码蛋信息
 
-    # 未实现
     return {
         "code": "200",
         "content": {"treasureBox": users_data[authorization]["treasurebox"]},
@@ -426,26 +532,40 @@ async def open_treasurebox(request: Request, authorization: Annotated[str, Cooki
     body = await request.body()
     # 转换为字符串
     _data_string = body.decode("utf-8")
+    # 转换为实际ID
+    data_id: str = _data_string.split("=")[1]
+
+    def filter_true_box(treasureBox: ConfigTreasureBox):
+        return str(treasureBox["id"]) == data_id
+
+    open_box_list = list(filter(filter_true_box, config_data["treasureBoxs"]))
+
+    if len(open_box_list) != 1:
+        return {"code": "400"}
+
+    open_box = open_box_list[0]
 
     # 添加钱币和精灵球数量
-    add_money = random.randint(10, 25)
-    add_ball = random.randint(10, 25)
+    add_money = random.randint(open_box["addMoney"][0], open_box["addMoney"][1])
+    add_ball = random.randint(open_box["addBall"][0], open_box["addBall"][1])
     users_data[authorization]["gold"] += add_money
     users_data[authorization]["sprite_ball_count"] += add_ball
+
+    # 没有实际加入
 
     return {
         "code": "200",
         "data": {
             "money": add_money,
             "spriteBallCount": add_ball,
-            "spriteIcon": "",
-            "spriteName": "暂不支持",
+            "spriteIcon": open_box["spriteIcon"],
+            "spriteName": open_box["spriteName"],
         },
     }
 
 
 @app.get("/sprite/team/my")
-async def get_my_tem():
+async def get_my_team():
     # 获取战队信息
 
     # 未实现
@@ -460,16 +580,16 @@ async def get_my_tem():
 
 
 @app.post("/sprite/showsprite")
-async def get_showsprite(authorization: Annotated[str, Cookie()]):
+async def get_showsprite(request: Request, authorization: Annotated[str, Cookie()]):
     # 获取本次捕捉精灵信息
 
     return {
         "code": "200",
         "data": {
-            "isCatch": 1,
+            "isCatch": random.randint(0, 1),
             "treasure_num": users_data[authorization]["sprite_ball_count"],
-            "spriteUrl": "https://edgeoneimg.cdn1.vip/i/6a4b679c1a293_1783326620.jpeg",
-            "name": "占位符",
+            "spriteUrl": config_data["showSprite"]["spriteUrl"],
+            "name": config_data["showSprite"]["name"],
         },
     }
 
@@ -479,15 +599,21 @@ async def give_catchsprite(authorization: Annotated[str, Cookie()]):
     # 捕捉精灵
 
     users_data[authorization]["sprite_ball_count"] -= 1
+    random_treasure = random.choice(config_data["treasureBoxs"])
     new_treasure(
         1,
-        "占位符",
-        "ltc",
-        "https://edgeoneimg.cdn1.vip/i/6a4b679c1a293_1783326620.jpeg",
-        3,
-        0,
+        random_treasure["boxName"],
+        random_treasure["enName"],
+        random_treasure["boxImageUrl"],
+        random_treasure["treasureBoxId"],
+        random_treasure["unlockNeedTime"],
         authorization,
+        random_treasure["id"],
+        random_treasure["videoType"],
+        random_treasure["remainingTime"],
+        random_treasure["status"],
     )
+    print(11)
 
     return {
         "code": "200",

@@ -1,0 +1,53 @@
+{
+    "treasureBoxs": [
+        {
+            "id": 0,
+            "treasureBoxId": 1,
+            "boxImageUrl": "https://edgeoneimg.cdn1.vip/i/6a4b679c1a293_1783326620.jpeg",
+            "enName": "ltc",
+            "boxName": "占位符",
+            "videoType": 1,
+            "unlockNeedTime": 1,
+            "status": 1,
+            "remainingTime": 1,
+            "addMoney": [
+                10,
+                25
+            ],
+            "addBall": [
+                10,
+                25
+            ],
+            "spriteIcon": "https://edgeoneimg.cdn1.vip/i/6a4b679c1a293_1783326620.jpeg",
+            "spriteName": "占位符"
+        }
+    ],
+    "newUser": {
+        "printUserCookie": false,
+        "gold": 0,
+        "masonry": 0,
+        "spriteBallCount": 999,
+        "treasurebox": []
+    },
+    "showSprite": {
+        "spriteUrl": "https://edgeoneimg.cdn1.vip/i/6a4b679c1a293_1783326620.jpeg",
+        "name": "占位符"
+    },
+    "arStore": [
+        {
+            "enDescription": "ltc!",
+            "description": "占位符!",
+            "star": 1,
+            "preview": "https://edgeoneimg.cdn1.vip/i/6a4b679c1a293_1783326620.jpeg",
+            "boxImageUrl": "https://edgeoneimg.cdn1.vip/i/6a4b679c1a293_1783326620.jpeg",
+            "id": 3,
+            "type": 0,
+            "name": "占位符",
+            "enName": "ltc",
+            "needGold": 2015,
+            "gold": 12,
+            "num": 2,
+            "needMasonry": 8
+        }
+    ]
+}
